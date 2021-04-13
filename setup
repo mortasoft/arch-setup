@@ -545,7 +545,6 @@ configure_install() {
         *) DESKTOP_PACKAGES+=('xf86-video-fbdev') ;;
       esac
     fi
-  fi
 }
 
 install_base() {
