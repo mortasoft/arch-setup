@@ -21,7 +21,7 @@ init() {
     --ok-label "Begin Installation" --msgbox "Default Options:\n \
     Keymap: $default_keyboard \n \
     Locale: $LOCALE \n \
-    Zone: $ZONE 
+    Zone: $ZONE \n \
     Hostname: $HOST_NAME" 20 70 
 
 }
