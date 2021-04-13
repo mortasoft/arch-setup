@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#Default Keyboard
+default_keyboard="us"
+
+# System Locale
+LOCALE="en_US.UTF-8"
+
+# Zone
+ZONE="America/Costa_Rica"
+
 # Load the configuration file
 init() {
   DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -7,7 +16,9 @@ init() {
   clear ; setfont Lat2-Terminus16.psfu.gz
   dialog --title "Welcome to the Mortasoft Arch Linux Installer" \
     --ok-label "Begin Installation" --msgbox "Default Options: \  
-    Keymap: US" 7 70
+    Keymap: $default_keyboard \
+    Locale: $LOCALE \
+    Zone: $ZONE " 7 70 
 }
 
 # Proceed with installation only if there is an internet connection
@@ -24,6 +35,33 @@ a working internet connection, retry running the installer." 10 80
     reset ; exit 1
   fi
 }
+
+# Set the keyboard layout
+set_keymap() {
+  dialog --infobox "Setting keymap to $default_keyboard..." 3 50
+  localectl set-keymap $default_keyboard
+  loadkeys $default_keyboard
+}
+
+# Set the system locale
+set_locale() { 
+  locales=("en_US.UTF-8" "es_CR.UTF-8")
+
+  for i in "${locales[@]}"
+  do
+    sed -i -e "/$i*/s/^#//" /etc/locale.gen
+  done
+
+  locale-gen  
+
+}
+
+# Prompt the user to set the system time zone
+set_timezone() {
+  timedatectl set-ntp true
+  utc_enabled=true
+  
+}    
 
 # Check and disable any active mountpoints
 check_mountpoints() {
@@ -84,102 +122,7 @@ data on the volume group before running the installer." 9 80
   fi
 }
 
-# Prompt the user to set their keyboard layout
-set_keymap() {
-  dialog --infobox "Setting keymap to US..." 3 50
-  localectl set-keymap us
-  loadkeys us
-}
 
-# Prompt the user to set the system locale
-set_locale() {
-
-  LOCALE="en_US.UTF-8"
-  locales=("en_US.UTF-8" "es_CR.UTF-8")
-
-  for i in "${locales[@]}"
-  do
-    sed -i -e "/$i*/s/^#//" /etc/locale.gen
-  done
-
-  locale-gen  
-
-}
-
-# Prompt the user to set the system time zone
-set_timezone() {
-  utc_enabled=true
-  regions=()
-  for region in \
-    $(find /usr/share/zoneinfo -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
-    | grep -E -v '/$|posix|right' \
-    | sort); do
-    regions+=("$region" "")
-  done
-  regions+=("other" "")
-
-  while true; do
-    ZONE=$(dialog --title "Set the Time Zone" --nocancel \
-      --menu "Select your time zone.\nIf your region is not listed, select \
-'other'.\n\nTime zone:" 27 50 17 \
-"${regions[@]}" 3>&1 1>&2 2>&3)
-
-    if [ "$ZONE" != "other" ]; then
-      zone_regions=()
-      for zone_region in \
-        $(find /usr/share/zoneinfo/"${ZONE}" -mindepth 1 -maxdepth 1 -printf '%f\n' \
-        | sort); do
-        zone_regions+=("$zone_region" "")
-      done
-      SUBZONE=$(dialog --title "Set the Time Zone" --cancel-label "Back" \
-        --menu "Select your time zone.\n\nTime zone:" 27 50 17 \
-"${zone_regions[@]}" 3>&1 1>&2 2>&3)
-      if [ $? -eq 0 ]; then
-        if [ -d /usr/share/zoneinfo/"${ZONE}/${SUBZONE}" ]; then
-          subzone_regions=()
-          for subzone_region in \
-            $(find /usr/share/zoneinfo/"${ZONE}/${SUBZONE}" -mindepth 1 -maxdepth 1 -printf '%f\n' \
-            | sort); do
-            subzone_regions+=("$subzone_region" "")
-          done
-          SUBZONE_SUBREGION=$(dialog --title "Set the Time Zone" \
-            --cancel-label "Back" \
-            --menu "Select your time zone.\n\nTime zone:" 27 50 17 \
-"${subzone_regions[@]}" 3>&1 1>&2 2>&3)
-          if [ $? -eq 0 ]; then
-            ZONE="${ZONE}/${SUBZONE}/${SUBZONE_SUBREGION}"
-            break
-          fi
-        else
-          ZONE="${ZONE}/${SUBZONE}"
-          break
-        fi
-      fi
-    else
-      for other_region in \
-        $(find /usr/share/zoneinfo -mindepth 1 -maxdepth 1 -type f -printf '%f\n' \
-        | grep -E -v '/$|iso3166.tab|leapseconds|posixrules|tzdata.zi|zone.tab|zone1970.tab' \
-        | sort); do
-        other_regions+=("$other_region" "")
-      done
-      ZONE=$(dialog --title "Set the Time Zone" --cancel-label "Back" \
-        --menu "Select your time zone.\n\nTime zone:" 27 50 17 \
-"${other_regions[@]}" 3>&1 1>&2 2>&3)
-      if [ $? -eq 0 ]; then
-        ZONE="${ZONE}"
-        break
-      fi
-    fi
-  done
-
-  dialog --title "Set the Hardware Clock" --nocancel \
-    --yesno "Would you like to set the hardware clock from the system \
-clock using UTC time?\nIf you select no, local time will be used \
-instead.\n\nIf you are unsure, UTC time is the default." 8 85
-  if [ $? -ne 0 ]; then
-    utc_enabled=false
-  fi
-}
 
 # Prompt the user to set the system hostname
 set_hostname() {
