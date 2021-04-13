@@ -20,6 +20,9 @@ FULL_NAME="Mario Zamora Madriz"
 USER_NAME="mortasoft"
 user_passwd="123456.."
 
+# GUI
+GUI="KDE Plasma"
+
 # Load the configuration file
 init() {
   DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -34,7 +37,8 @@ init() {
     Root Password: $root_passwd \n \
     User Full Name: $FULL_NAME \n \
     Username: $USER_NAME \n \
-    User Password: $user_passwd" 20 70 
+    User Password: $user_passwd \n \
+    GUI: $GUI" 20 70 
 
 }
 
@@ -449,21 +453,12 @@ process? If you choose yes, you will be returned to the partition menu." 7 65
 
 # Use the reflector script to update the pacman mirror list
 update_mirrorlist() {
-  dialog --title "Update the Mirror List" \
-    --yesno "Would you like to update the Arch Linux mirror list?\n\nUpdating \
-the mirror list will speed up the download of packages. If you select no, \
-your download speed may be affected." 8 70
-
-  if [ $? -eq 0 ]; then
-    dialog --infobox "Updating pacman mirror list..." 3 50
-    # Sort the 50 most recently synchronized HTTPS mirrors by download speed
-    reflector --latest 50 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-  fi
+  reflector --latest 2 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 # Prompt the user to install the base packages for the system
 configure_install() {
-  bluetooth_enabled=false
+  bluetooth_enabled=true
   dm_enabled=false
   multilib=false
   DESKTOP_PACKAGES=()
@@ -484,199 +479,37 @@ configure_install() {
     DESKTOP_PACKAGES+=('xfsprogs')
   fi
 
-  if [ "$architecture" = "x86_64" ]; then
-    dialog --title "Enable multilib" \
-      --yesno "Would you like to enable the 'multilib' repository?\n\nBy \
-default, Arch only includes 64-bit software in its repositories. The \
-'multilib' repository contains 32-bit software that is compatible on a 64-bit \
-system (e.g. wine, steam, etc)." 9 70
-    if [ $? -eq 0 ]; then
-      multilib=true
-    fi
-  fi
-
-  while true; do
-    DESKTOP=$(dialog --title "Choose your Graphical Environment" --no-cancel \
-      --menu "Select the style of graphical environment you wish to \
-use.\n\nGraphical environment:" 12 75 3 \
-"Desktop Environment" "Traditional complete graphical user interface" \
-"Window Manager" "Standalone minimal graphical user interface" \
-"None" "Command-line only interface" 3>&1 1>&2 2>&3)
-
-    if [ "$DESKTOP" = "Desktop Environment" ]; then
-      GUI=$(dialog --title "Select a Desktop Environment" \
-        --cancel-label "Back" \
-        --menu "Select a desktop environment to install:" 15 65 8 \
-"Budgie" "Modern GNOME based desktop" \
-"Cinnamon" "Traditional desktop experience" \
-"GNOME" "Modern simplicity focused desktop" \
-"KDE Plasma" "Full featured QT based desktop" \
-"LXDE" "Lightweight and efficient desktop" \
-"LXQT" "Lightweight and efficient QT based desktop" \
-"MATE" "Continuation of the GNOME 2 desktop" \
-"Xfce" "Lightweight and modular desktop" 3>&1 1>&2 2>&3)
-      if [ $? -eq 0 ]; then
-        break
-      fi
-    elif [ "$DESKTOP" = "Window Manager" ]; then
-      GUI=$(dialog --title "Select a Window Manager" \
-        --cancel-label "Back" \
-        --menu "Select a window manager to install:" 13 75 6 \
-"awesome" "Highly configurable, dynamic window manager" \
-"bspwm" "Tiling window manager based on binary space partitioning" \
-"Fluxbox" "Stacking window manager based on Blackbox" \
-"i3" "Dynamic tiling window manager inspired by wmii" \
-"Openbox" "Highly configurable, stacking window manager" \
-"xmonad" "Dynamic tiling window manager configured in Haskell" 3>&1 1>&2 2>&3)
-      if [ $? -eq 0 ]; then
-        break
-      fi
-    else
-      break
-    fi
-  done
-
-  if [ "$DESKTOP" != "None" ]; then
-    DESKTOP_PACKAGES+=("${DESKTOP_DEFAULTS[@]}")
+  multilib=true
+  
+  
     case "$GUI" in
-      "Budgie") DESKTOP_PACKAGES+=('budgie-desktop' 'gnome-control-center')
-                dialog --title "Install Extras" --yesno "Would you like to \
-install the 'gnome' group?\n\nIt contains additional utilities and \
-applications that integrate well with the Budgie desktop." 8 60
-                if [ $? -eq 0 ]; then
-                  DESKTOP_PACKAGES+=('gnome')
-                fi
-                xinit_config="export XDG_CURRENT_DESKTOP=Budgie:GNOME ; exec budgie-desktop"
-                ;;
-      "Cinnamon") DESKTOP_PACKAGES+=('cinnamon' 'cinnamon-translations' 'nemo-fileroller')
-                  xinit_config="exec cinnamon-session"
-                  ;;
       "GNOME") DESKTOP_PACKAGES+=('gnome')
-               dialog --title "Install Extras" --yesno "Would you like to \
-install the 'gnome-extra' group?\n\nIt contains additional utilities and \
-applications that integrate well with the GNOME desktop." 8 60
-               if [ $? -eq 0 ]; then
-                 DESKTOP_PACKAGES+=('gnome-extra')
-               fi
+               DESKTOP_PACKAGES+=('gnome-extra')
+               DESKTOP_PACKAGES+=('network-manager-applet' 'gnome-keyring')
+               DESKTOP_PACKAGES+=('gnome-bluetooth')
+               DESKTOP_PACKAGES+=('gdm')
                xinit_config="exec gnome-session"
+               DM="gdm"
                ;;
       "KDE Plasma") DESKTOP_PACKAGES+=('plasma')
-                    dialog --title "Install Extras" --yesno "Would you like \
-to install the 'kde-applications' group?\n\nIt contains additional utilities \
-and applications that integrate well with the Plasma desktop." 8 60 
-                    if [ $? -eq 0 ]; then
-                      DESKTOP_PACKAGES+=('kde-applications')
-                    fi
+                    DESKTOP_PACKAGES+=('kde-applications')
+                    DESKTOP_PACKAGES+=('plasma-nm')
+                    DESKTOP_PACKAGES+=('bluedevil')
+                    DESKTOP_PACKAGES+=('sddm')
                     xinit_config="exec startkde"
+                    DM="sddm"
                     ;;
-      "LXDE") DESKTOP_PACKAGES+=('lxde')
-              xinit_config="exec startlxde"
-              ;;
-      "LXQT") DESKTOP_PACKAGES+=('lxqt' 'breeze-icons')
-              xinit_config="exec startlxqt"
-              ;;
-      "MATE") DESKTOP_PACKAGES+=('mate' 'gtk-engines' 'gtk-engine-murrine')
-              dialog --title "Install Extras" --yesno "Would you like to \
-install the 'mate-extra' group?\n\nIt contains additional utilities and \
-applications that integrate well with the MATE desktop." 8 60
-              if [ $? -eq 0 ]; then
-                DESKTOP_PACKAGES+=('mate-extra')
-              fi
-              xinit_config="exec mate-session"
-              ;;
       "Xfce") DESKTOP_PACKAGES+=('xfce4')
-              dialog --title "Install Extras" --yesno "Would you like to \
-install the 'xfce4-goodies' group?\n\nIt contains additional utilities and \
-applications that integrate well with the Xfce desktop." 8 60
-              if [ $? -eq 0 ]; then
-                DESKTOP_PACKAGES+=('xfce4-goodies')
-              fi
+              DESKTOP_PACKAGES+=('xfce4-goodies')
+              DESKTOP_PACKAGES+=('lightdm' 'lightdm-gtk-greeter' 'lightdm-gtk-greeter-settings')
               xinit_config="exec startxfce4"
+              DM="lightdm"
               ;;
-      "awesome") DESKTOP_PACKAGES+=('awesome')
-                 xinit_config="exec awesome"
-                 ;;
-      "bspwm") DESKTOP_PACKAGES+=('bspwm' 'sxhkd')
-               xinit_config="sxhkd & ; exec bspwm"
-               ;;
-      "Fluxbox") DESKTOP_PACKAGES+=('fluxbox')
-                 xinit_config="exec startfluxbox"
-                 ;;
-      "i3") DESKTOP_PACKAGES+=('i3')
-            xinit_config="exec i3"
-            ;;
-      "Openbox") DESKTOP_PACKAGES+=('openbox')
-                 xinit_config="exec openbox-session"
-                 ;;
-      "xmonad") DESKTOP_PACKAGES+=('xmonad' 'xmonad-contrib')
-                xinit_config="exec xmonad"
-                ;;
     esac
 
-    # GNOME already has networkmanager applet built-in. Plasma uses plasma-nm
-    if [ "$GUI" != "GNOME" ]; then
-      if [ "$GUI" = "KDE Plasma" ]; then
-        DESKTOP_PACKAGES+=('plasma-nm')
-      else
-        DESKTOP_PACKAGES+=('network-manager-applet' 'gnome-keyring')
-      fi
-    fi
-
-    # Check for available bluetooth devices
-    if $bluetooth; then
-      dialog --title "Enable Bluetooth" \
-        --yesno "The installer has detected Bluetooth support on your \
-system.\n\nWould you like to install and enable the Bluetooth service?" 7 65
-      if [ $? -eq 0 ]; then
-        bluetooth_enabled=true
-        DESKTOP_PACKAGES+=('bluez' 'bluez-utils' 'pulseaudio-bluetooth')
-        dialog --title "Install Bluetooth Manager" \
-          --yesno "Would you like to install a graphical Bluetooth \
-manager?\n\nThe utility that best integrates with the desktop environment \
-you selected will be installed." 8 60
-        if [ $? -eq 0 ]; then
-          case "$GUI" in
-            "Budgie"|"GNOME") DESKTOP_PACKAGES+=('gnome-bluetooth') ;;
-            "Cinnamon") DESKTOP_PACKAGES+=('blueberry') ;;
-            "KDE Plasma") DESKTOP_PACKAGES+=('bluedevil') ;;
-            *) DESKTOP_PACKAGES+=('blueman') ;;
-          esac
-        fi
-      fi
-    fi
-
-    dialog --title "Install a Display Manager" \
-      --yesno "Would you like to install a graphical login manager?\n\nIf you \
-select no, 'xinit' will be installed so you can manually start Xorg with the\
-'startx' command." 8 60
-    if [ $? -eq 0 ]; then
-      DM=$(dialog --title "Install a Display Manager" \
-          --menu "Select a display manager to install:" 10 50 3 \
-"gdm" "GNOME Display Manager" \
-"lightdm" "Lightweight Display Manager" \
-"sddm" "Simple Desktop Display Manager" 3>&1 1>&2 2>&3)
-      if [ $? -eq 0 ]; then
-        dm_enabled=true
-        case "$DM" in
-          "gdm") DESKTOP_PACKAGES+=('gdm') ;;
-          "lightdm") DESKTOP_PACKAGES+=('lightdm' 'lightdm-gtk-greeter' 'lightdm-gtk-greeter-settings') ;;
-          "sddm") DESKTOP_PACKAGES+=('sddm') ;;
-        esac
-      else
-        DESKTOP_PACKAGES+=('xorg-xinit')
-        dialog --title "xinit" \
-          --msgbox "No display manager selected. Installing 'xorg-xinit'. The \
-installer will create a xinitrc file for you.\n\nYou will need to use the \
-'startx' command to start the graphical environment once you login." 9 57
-      fi
-    else
-      DESKTOP_PACKAGES+=('xorg-xinit')
-      dialog --title "xinit" \
-        --msgbox "No display manager selected. Installing 'xorg-xinit'. The \
-installer will create a xinitrc file for you.\n\nYou will need to use the \
-'startx' command to start the graphical environment once you login." 9 57
-    fi
-
+    DESKTOP_PACKAGES+=('bluez' 'bluez-utils' 'pulseaudio-bluetooth')
+    dm_enabled=true
+     
     # Intel/AMD/NVIDIA drivers are not installed on virtual machines
     if [ "$hypervisor" = "none" ]; then
       if lspci | grep "VGA" | grep -iq "Intel"; then
@@ -684,14 +517,7 @@ installer will create a xinitrc file for you.\n\nYou will need to use the \
       fi
 
       if lspci | grep "VGA" | grep -iq "NVIDIA"; then
-        gpu_driver=$(dialog --title "Install Graphics Driver" --no-cancel \
-          --menu "The installer has detected an NVIDIA graphics card on your \
-system.\n\nYou may choose to install either the open-source or proprietary \
-driver. If you are unsure, the proprietary driver usually offers the best \
-performance.\n\nGraphics driver:" 16 70 3 \
-"NVIDIA" "Proprietary NVIDIA driver" \
-"Nouveau" "Open-source Nouveau driver" \
-"None" "-" 3>&1 1>&2 2>&3)
+        gpu_driver="NVIDIA" 
         if [ "$gpu_driver" = "NVIDIA" ]; then
           # Get only the GPU PCI device ID
           gpu_pci_id=$(lspci -nn  | grep -ioP 'VGA.*NVIDIA.*\[\K[\w:]+' | sed 's/.*://')
@@ -700,9 +526,6 @@ performance.\n\nGraphics driver:" 16 70 3 \
             DESKTOP_PACKAGES+=('nvidia-390xx' 'nvidia-390xx-utils' 'nvidia-390xx-settings')
           elif grep -Fq "$gpu_pci_id" "$DIR"/etc/nvidia_340_pci_ids; then
             # Support for nvidia-340xx has been dropped, use nouveau
-            dialog --title "Install Graphics Driver" \
-              --msgbox "Proprietary driver support has ended for your graphics \
-card.\n\nThe open-source Nouveau driver will be installed." 7 65
             DESKTOP_PACKAGES+=('xf86-video-nouveau' 'mesa')
           else
             DESKTOP_PACKAGES+=('nvidia' 'nvidia-utils' 'nvidia-settings')
@@ -711,27 +534,10 @@ card.\n\nThe open-source Nouveau driver will be installed." 7 65
           DESKTOP_PACKAGES+=('xf86-video-nouveau' 'mesa')
         fi
       elif lspci | grep "VGA" | grep -q "ATI\|AMD"; then
-        gpu_driver=$(dialog --title "Install Graphics Driver" --no-cancel \
-          --menu "The installer has detected an ATI/AMD graphics card on your \
-system.\nThe appropriate driver to install depends on how modern your GPU \
-is.\n\nIf you are unsure, the ATI driver is generally more stable and \
-supports the majority of ATI/AMD GPUs. If you have one of the latest AMD GPUs \
-(Volcanic Islands or newer), then you should install the AMDGPU \
-driver.\n\nGraphics driver:" 17 75 3 \
-"ATI" "Open-source ATI/AMD Radeon driver" \
-"AMDGPU" "Open-source driver for the latest AMD GPUs" \
-"None" "-" 3>&1 1>&2 2>&3)
-        if [ "$gpu_driver" = "ATI" ]; then
-          DESKTOP_PACKAGES+=('xf86-video-ati' 'mesa')
-        else
-          DESKTOP_PACKAGES+=('xf86-video-amdgpu' 'mesa')
-        fi
+        gpu_driver="ATI" 
+        DESKTOP_PACKAGES+=('xf86-video-ati' 'mesa')
       fi
     else
-      dialog --title "Virtual Machine Detected" \
-        --msgbox "The installer has detected a virtualized environment: \
-$hypervisor\n\nAny required drivers or utilities will be \
-installed for you." 7 70
       case "$hypervisor" in
         "vmware") DESKTOP_PACKAGES+=('open-vm-tools' 'xf86-video-vmware' 'xf86-input-vmmouse' 'mesa' 'gtkmm' 'gtkmm3') ;;
         "oracle") DESKTOP_PACKAGES+=('virtualbox-guest-utils' 'virtualbox-guest-dkms') ;;
@@ -978,8 +784,8 @@ main() {
   set_locale
   set_timezone
   prepare_disk
-  #update_mirrorlist
-  #configure_install
+  update_mirrorlist
+  configure_install
   #install_base
   #configure_system
   #reboot_system
