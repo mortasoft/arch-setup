@@ -137,13 +137,6 @@ data on the volume group before running the installer." 9 80
   fi
 }
 
-# Prompt the user to create an unprivileged user account
-create_user() {
-
-    
-
-}
-
 # Prepare the user's selected disk for partitioning
 prepare_disk() {
   SWAP="-"
