@@ -785,7 +785,7 @@ main() {
   prepare_disk
   update_mirrorlist
   configure_install
-  #install_base
+  install_base
   #configure_system
   #reboot_system
 }
