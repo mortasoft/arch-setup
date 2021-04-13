@@ -12,6 +12,14 @@ ZONE="America/Costa_Rica"
 # Hostname
 HOST_NAME="arch"
 
+# Root Password
+root_passwd="123456.."
+
+# User Information
+FULL_NAME="Mario Zamora Madriz"
+USER_NAME="mortasoft"
+user_passwd="123456.."
+
 # Load the configuration file
 init() {
   DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,7 +30,11 @@ init() {
     Keymap: $default_keyboard \n \
     Locale: $LOCALE \n \
     Zone: $ZONE \n \
-    Hostname: $HOST_NAME" 20 70 
+    Hostname: $HOST_NAME \n \
+    Root Password: $root_passwd \n \
+    User Full Name: $FULL_NAME \n \
+    Username: $USER_NAME \n \
+    User Password: $user_passwd" 20 70 
 
 }
 
@@ -125,88 +137,11 @@ data on the volume group before running the installer." 9 80
   fi
 }
 
-# Prompt the user to create a password for the superuser account
-set_root_passwd(){
-  inputs_match=false
-  while ! $inputs_match; do
-    input=$(dialog --title "Set the Root Password" --clear --stdout --nocancel \
-      --insecure --passwordbox "Please enter a password for 'root', the \
-system administrative account.\n\nRoot password:" 10 75)
-    confirm_input=$(dialog --title "Set the Root Password" --clear --stdout \
-      --insecure --passwordbox "Re-enter password to verify:" 8 55)
-
-    if [ -z "$input" ]; then
-      dialog --title "ERROR: Empty Password" \
-        --msgbox "You are not allowed to have an empty password." 5 55
-    elif [ "$input" != "$confirm_input" ]; then
-      dialog --title "ERROR: Passwords Do No Match" \
-        --msgbox "The two passwords you entered did not match." 5 55
-    else
-      root_passwd="$input"
-      inputs_match=true
-    fi
-  done
-}
-
 # Prompt the user to create an unprivileged user account
 create_user() {
-  while true; do
-    FULL_NAME=$(dialog --title "Create a User Account" --nocancel \
-      --inputbox "The installer will create a user account for you. This is \
-the main user account that you will login to and use for non-administrative \
-activities.\n\nPlease enter the real name for this user. This information \
-will be used for any program that uses the user's real name such as email. \
-Entering your full name here is recommended; however, it may be left \
-blank.\n\nFull name for the new user:" 15 80 3>&1 1>&2 2>&3)
 
-    USER_NAME=$(dialog --title "Create a User Account" \
-     --cancel-label "Back" --inputbox "Please enter a username for the new \
-account.\n\nThe username should start with a lower-case letter, which can be \
-followed by any combination of numbers, more lower-case letters, or the dash \
-symbol.\n\nUsername for your account:" 13 80 3>&1 1>&2 2>&3)
+    
 
-    if [ $? -eq 0 ]; then
-      # Username must start with lowercase letter. May contain lowercase
-      # alpha-numerics and dashes
-      if printf "%s" "$USER_NAME" | grep -Eoq "^[a-z][a-z0-9-]*$" \
-        && [ "${#USER_NAME}" -lt 33 ]; then
-        # The reserved_username file contains usernames that should be avoided
-        if grep -Fxq "$USER_NAME" "$DIR"/etc/reserved_usernames; then
-          dialog --title "ERROR: Reserved Username" \
-            --msgbox "The username you entered ($USER_NAME) is reserved for \
-use by the system. Please select a different one." 6 70
-        else 
-          inputs_match=false
-          while ! $inputs_match; do
-            input=$(dialog --title "Set the Password for $USER_NAME" --clear \
-              --stdout --nocancel --insecure --passwordbox "Please enter a \
-password for '$USER_NAME'.\n\nChoose a password for the new user:" 10 70)
-            confirm_input=$(dialog --title "Set the Password for $USER_NAME" \
-              --clear --stdout --insecure \
-              --passwordbox "Re-enter password to verify:" 8 55)
-
-            if [ -z "$input" ]; then
-              dialog --title "ERROR: Empty Password" \
-                --msgbox "You are not allowed to have an empty password." 5 55
-            elif [ "$input" != "$confirm_input" ]; then
-              dialog --title "ERROR: Passwords Do No Match" \
-                --msgbox "The two passwords you entered did not match." 5 55
-            else
-              user_passwd="$input"
-              inputs_match=true
-            fi
-          done
-          break
-        fi
-      else
-        dialog --title "ERROR: Invalid Username Format" \
-          --msgbox "You entered an invalid username.\n\nThe username must \
-start with a lower-case letter, which can be followed by any combination of \
-numbers, more lower-case letters, or the dash symbol, and must be no more \
-than 32 characters long." 9 80
-      fi
-    fi
-  done
 }
 
 # Prepare the user's selected disk for partitioning
@@ -1049,7 +984,6 @@ main() {
   set_keymap
   set_locale
   set_timezone
-  #set_root_passwd
   #create_user
   #prepare_disk
   #update_mirrorlist
