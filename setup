@@ -95,11 +95,11 @@ set_keymap() {
 set_locale() {
 
   LOCALE="en_US.UTF-8"
-  locales=("en_US.UTF-8 UTF-8" "es_CR.UTF-8 UTF-8")
+  locales=("en_US.UTF-8" "es_CR.UTF-8")
 
-  for i in locales
+  for i in "${locales[@]}"
   do
-    sed -i -e "/$i/s/^#//" /etc/locale.gen
+    sed -i -e "/$i*/s/^#//" /etc/locale.gen
   done
 
   locale-gen  
