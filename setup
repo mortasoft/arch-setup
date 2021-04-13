@@ -9,6 +9,9 @@ LOCALE="en_US.UTF-8"
 # Zone
 ZONE="America/Costa_Rica"
 
+# Hostname
+HOST_NAME="arch"
+
 # Load the configuration file
 init() {
   DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,7 +21,9 @@ init() {
     --ok-label "Begin Installation" --msgbox "Default Options:\n \
     Keymap: $default_keyboard \n \
     Locale: $LOCALE \n \
-    Zone: $ZONE " 20 70 
+    Zone: $ZONE 
+    Hostname: $HOST_NAME" 20 70 
+
 }
 
 # Proceed with installation only if there is an internet connection
@@ -124,7 +129,7 @@ data on the volume group before running the installer." 9 80
 
 # Set the system hostname
 set_hostname() {
-    HOST_NAME="arch"
+    
 }
 
 # Prompt the user to create a password for the superuser account
