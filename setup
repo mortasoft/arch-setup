@@ -977,8 +977,7 @@ main() {
   set_keymap
   set_locale
   set_timezone
-  #create_user
-  #prepare_disk
+  prepare_disk
   #update_mirrorlist
   #configure_install
   #install_base
