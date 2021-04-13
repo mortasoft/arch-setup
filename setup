@@ -15,7 +15,7 @@ init() {
   source "$DIR"/etc/setup.conf
   clear ; setfont Lat2-Terminus16.psfu.gz
   dialog --title "Welcome to the Mortasoft Arch Linux Installer" \
-    --ok-label "Begin Installation" --msgbox "Default Options: \n  \
+    --ok-label "Begin Installation" --msgbox "Default Options:\n  \
     Keymap: $default_keyboard \n \
     Locale: $LOCALE \n \
     Zone: $ZONE " 20 70 
