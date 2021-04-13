@@ -52,8 +52,6 @@ set_locale() {
     sed -i -e "/$i*/s/^#//" /etc/locale.gen
   done
 
-  locale-gen  
-
 }
 
 # Prompt the user to set the system time zone
@@ -124,27 +122,9 @@ data on the volume group before running the installer." 9 80
 
 
 
-# Prompt the user to set the system hostname
+# Set the system hostname
 set_hostname() {
-  while true; do
-    HOST_NAME=$(dialog --title "Set the Hostname" --nocancel \
-      --inputbox "Please enter the hostname for this system.\n\nThe hostname \
-is a single word that identifies your system to the network.\n\nHostname:" \
-12 80 "arch" 3>&1 1>&2 2>&3)
-
-    # Hostname must be alpha-numeric and may contain a dash only in between
-    if printf "%s" "$HOST_NAME" | grep -Eoq "^[a-zA-Z0-9-]{1,63}$" \
-      && [ "${HOST_NAME:0:1}" != "-" ] \
-      && [ "${HOST_NAME: -1}" != "-" ]; then
-      break
-    else
-      dialog --title "ERROR: Invalid Hostname Format" \
-        --msgbox "You entered an invalid hostname.\n\nA valid hostname may \
-contain only the numbers 0-9, upper and lowercase letters (A-Z and a-z), and \
-the minus sign. It must be at most 63 characters long, and may not begin \
-or end with a minus sign." 9 75
-    fi
-  done
+    HOST_NAME="arch"
 }
 
 # Prompt the user to create a password for the superuser account
@@ -1070,8 +1050,8 @@ main() {
   check_connection
   set_keymap
   set_locale
-  #set_timezone
-  #set_hostname
+  set_timezone
+  set_hostname
   #set_root_passwd
   #create_user
   #prepare_disk
