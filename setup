@@ -125,13 +125,6 @@ data on the volume group before running the installer." 9 80
   fi
 }
 
-
-
-# Set the system hostname
-set_hostname() {
-    
-}
-
 # Prompt the user to create a password for the superuser account
 set_root_passwd(){
   inputs_match=false
@@ -1056,7 +1049,6 @@ main() {
   set_keymap
   set_locale
   set_timezone
-  set_hostname
   #set_root_passwd
   #create_user
   #prepare_disk
