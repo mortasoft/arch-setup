@@ -1189,19 +1189,19 @@ mounted filesystem.\n\nReturn to partitioning?" 7 60
 
 main() {
   init
-  check_connection
-  set_keymap
-  set_locale
-  set_timezone
-  set_hostname
-  set_root_passwd
-  create_user
-  prepare_disk
-  update_mirrorlist
-  configure_install
-  install_base
-  configure_system
-  reboot_system
+  #check_connection
+  #set_keymap
+  #set_locale
+  #set_timezone
+  #set_hostname
+  #set_root_passwd
+  #create_user
+  #prepare_disk
+  #update_mirrorlist
+  #configure_install
+  #install_base
+  #configure_system
+  #reboot_system
 }
 
 main
