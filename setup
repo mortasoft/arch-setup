@@ -6,9 +6,8 @@ init() {
   source "$DIR"/etc/setup.conf
   clear ; setfont Lat2-Terminus16.psfu.gz
   dialog --title "Welcome to Arch Linux Installer" \
-    --ok-label "Begin Installation" --msgbox "Navigating the installer is \
-easy.\nYou may select options using the ARROW keys and SPACE or \
-ENTER.\nAlternate keys may also be used: '+', '-', and TAB." 7 70
+    --ok-label "Begin Installation" --msgbox "Default Options: \ 
+    Keymap: US \ " 7 70
 }
 
 # Proceed with installation only if there is an internet connection
